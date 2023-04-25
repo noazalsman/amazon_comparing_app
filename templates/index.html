@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Page</title>
+    <link rel="stylesheet" href="../static/css/styles.css">
+</head>
+<body>
+<h1>Search an item from Amazon</h1>
+<form>
+    <input type="text" id="search" name="search" placeholder="Enter search...">
+    <input type="submit" value="Search">
+</form>
+
+<h2>Results:</h2>
+<table style="display: none;">
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th>Image</th>
+    </tr>
+    </thead>
+    <tbody id="results-table">
+    <!-- The results will be added here using JavaScript -->
+    </tbody>
+    <tbody>
+    <!-- The results will be added here using JavaScript -->
+    </tbody>
+</table>
+
+<p><a href="past_searches.html">My Past Searches</a></p>
+
+<script src="../static/js/script.js"></script>
+</body>
+</html>

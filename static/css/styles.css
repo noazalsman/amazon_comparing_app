@@ -1,0 +1,117 @@
+* {
+    font-family: Tahoma, Verdana, sans-serif;
+}
+
+/* Center the heading */
+h1 {
+    text-align: center;
+    margin-top: 3%;
+    font-weight: bold;
+}
+
+h2 {
+    text-align: center;
+    margin-top: 5%;
+}
+
+/* Center the search form */
+form {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-top: 50px;
+}
+
+/* Style the search input */
+input[type="text"] {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #dfe1e5;
+    border-radius: 24px;
+    width: 500px;
+    margin-right: 10px;
+    background-color: #f2f2f2;
+}
+
+/* Style the submit button */
+input[type="submit"] {
+    padding: 10px;
+    font-size: 16px;
+    border: none;
+    border-radius: 24px;
+    background-color: #f2f2f2;
+    color: #5f6368;
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+}
+
+input[type="submit"]:hover {
+    background-color: #e0e0e0;
+    color: #202124;
+}
+
+/* Align the link to the top right */
+p {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 18px;
+}
+
+/* Style the table */
+table {
+    margin: 50px auto;
+    border-collapse: collapse;
+    width: 80%;
+    text-align: center;
+}
+
+th, td {
+    padding: 10px;
+}
+
+th {
+    background-color: #f2f2f2;
+    color: #5f6368;
+    font-weight: 400;
+}
+
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+#results-table tr:hover {
+    background-color: #e0e0e0;
+}
+
+/* Style the link */
+a {
+    padding: 10px;
+    font-size: 18px;
+    color: #5f6368;
+    text-decoration: none;
+    border: 2px solid #5f6368;
+    border-radius: 24px;
+    transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+}
+
+a:hover {
+    background-color: #5f6368;
+    color: #f2f2f2;
+    border-color: #f2f2f2;
+}
+
+/* Align the link to the top right */
+p {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 18px;
+}
+
+th {
+    text-align: center;
+}
+
+
