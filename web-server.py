@@ -14,7 +14,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
 with app.app_context():
-    db.drop_all()  # Drop all existing tables
+    # db.drop_all()  # Drop all existing tables
     db.create_all()
 
 
@@ -231,6 +231,27 @@ def save_item_data():
 
     print("saving:", search_data)
     return jsonify({'message': 'Search data saved successfully.'})
+
+
+@app.route('/get_past_searches', methods=['GET'])
+def get_past_searches():
+    all_searches = db.session.query(SearchData).all()
+    results = []
+
+    for search in all_searches:
+        search_data = {
+            'id': search.id,
+            'query': search.query,
+            'time': search.time,
+            'item_name': search.item_name,
+            'amazon_com_price': search.amazon_com_price,
+            'amazon_co_uk_price': search.amazon_co_uk_price,
+            'amazon_de_price': search.amazon_de_price,
+            'amazon_ca_price': search.amazon_ca_price
+        }
+        results.append(search_data)
+
+    return jsonify(results)
 
 
 # Serve html to the browser
