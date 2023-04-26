@@ -4,8 +4,9 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import time
-from models import db, SearchData
+from models import db, SearchData, User
 import os
+from datetime import datetime
 
 app = Flask(__name__)
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///search_data.db'
@@ -16,6 +17,12 @@ db.init_app(app)
 with app.app_context():
     # db.drop_all()  # Drop all existing tables
     db.create_all()
+
+    # Create a shared user if the user table is empty
+    if User.query.count() == 0:
+        shared_user = User(daily_search_count=0)
+        db.session.add(shared_user)
+        db.session.commit()
 
 
 def fetch_amazon_search_page(query='case', country='ca', is_asin=False):
@@ -35,11 +42,6 @@ def fetch_amazon_search_page(query='case', country='ca', is_asin=False):
 
 
 USER_AGENTS = [
-    # "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36",
-    # "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_6_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Safari/605.1.15",
-    # "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0",
-    # "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1",
-    # "Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Mobile Safari/537.36"
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
     'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:54.0) Gecko/20100101 Firefox/54.0',
@@ -132,7 +134,6 @@ def search():
     #     if len(search_results) >= 10:
     #         break
 
-
     for result in results:
         if len(search_results) < 10:
             try:
@@ -172,8 +173,28 @@ def search():
             except (AttributeError, KeyError):
                 continue
 
+    # Increment the search count for the shared user and update the last search date
+    shared_user = User.query.first()
+    if shared_user.last_search_date is None or shared_user.last_search_date.date() < datetime.utcnow().date():
+        shared_user.daily_search_count = 1
+        shared_user.last_search_date = datetime.utcnow()
+    else:
+        shared_user.daily_search_count += 1
+    db.session.commit()
+
     print(search_results)
     return jsonify(search_results)
+
+
+@app.route('/check_daily_searches', methods=['GET'])
+def check_daily_searches():
+    shared_user = User.query.first()
+    search_count = 0
+
+    if shared_user.last_search_date is not None and shared_user.last_search_date.date() == datetime.utcnow().date():
+        search_count = shared_user.daily_search_count
+
+    return jsonify({"search_count": search_count})
 
 
 @app.route('/product-details', methods=['POST'])
@@ -265,7 +286,6 @@ def past_searches():
     return render_template('past_searches.html')
 
 
-# type this in browser to open: http://localhost:81/
+# Type this in browser to open: http://localhost:81/
 if __name__ == '__main__':
-    # fetch_amazon_search_page()
     app.run(host='0.0.0.0', port=81, debug=True)

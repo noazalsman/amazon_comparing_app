@@ -7,7 +7,19 @@ document.querySelector('form').addEventListener('submit', (event) => {
     performSearch(searchQuery);
 });
 
+async function checkDailySearches() {
+    const response = await fetch('/check_daily_searches');
+    const data = await response.json();
+    return data.search_count;
+}
+
 async function performSearch(query) {
+    const searchCount = await checkDailySearches();
+    if (searchCount >= 10) {
+        alert('Daily searches cap reached. Consider upgrading to the premium service in order to search for more items.');
+        return;
+    }
+
     const response = await fetch(`/search?query=${query}`);
 
     // for testing:
@@ -143,5 +155,8 @@ async function saveItemData(data) {
     });
     return response.json();
 }
+
+
+
 
 
