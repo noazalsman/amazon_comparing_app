@@ -24,11 +24,17 @@ function populateResultsTable(results) {
     const resultsTable = document.getElementById("results-table");
     resultsTable.innerHTML = ""; // Clear the table contents
 
-    // Show the table if there are search results
-    if (results.length > 0) {
-        document.querySelector('table').style.display = 'table';
-    } else {
-        document.querySelector('table').style.display = 'none';
+    // // Show the table if there are search results
+    // if (results.length > 0) {
+    //     document.querySelector('table').style.display = 'table';
+    // } else {
+    //     document.querySelector('table').style.display = 'none';
+    // }
+
+    const item_table = document.getElementById('item-table');
+    if(item_table) {
+        item_table.remove();
+        resultsTable.parentElement.style.display = 'table';
     }
 
     // Iterate through the results and create table rows
@@ -52,7 +58,6 @@ function populateResultsTable(results) {
 }
 
 
-// new section
 async function fetchProductDetails(asin, itemName, amazon_com_price, itemRating) {
     const response = await fetch('/product-details', {
         method: 'POST',
@@ -62,7 +67,6 @@ async function fetchProductDetails(asin, itemName, amazon_com_price, itemRating)
         body: JSON.stringify({ asin, amazon_com_price }),
     });
     const prices = await response.json();
-    temp_items['prices'] = prices
 
     // Create a new table with 6 columns and 2 rows to display the item's name, rating, and prices
     let table = document.createElement('table');
@@ -82,10 +86,10 @@ async function fetchProductDetails(asin, itemName, amazon_com_price, itemRating)
             <tr>
                 <td>${itemName}</td>
                 <td>${itemRating}</td>
-                <td>${prices['Amazon.com']}$</td>
-                <td>${prices['Amazon.co.uk']}$</td>
-                <td>${prices['Amazon.de']}$</td>
-                <td>${prices['Amazon.ca']}$</td>
+                <td>${prices['Amazon.com'] || 'Not found'}</td>
+                <td>${prices['Amazon.co.uk'] || 'Not found'}</td>
+                <td>${prices['Amazon.de'] || 'Not found'}</td>
+                <td>${prices['Amazon.ca'] || 'Not found'}</td>
             </tr>
         </tbody>
     `;
@@ -93,11 +97,30 @@ async function fetchProductDetails(asin, itemName, amazon_com_price, itemRating)
     // Replace the existing results table with the new product details table
     let resultsTable = document.getElementById('results-table');
     let parent = resultsTable.parentElement;
-    parent.parentElement.replaceChild(table, parent);
+    parent.style.display = 'none';
+    parent.parentElement.appendChild(table);
+    // parent.parentElement.replaceChild(table, parent);
+
+    const adjustedDate = new Date(new Date().getTime() + 3 * 60 * 60 * 1000);
+    const formattedDate = adjustedDate.toISOString().slice(0, 19).replace('T', ' ');
+
+    const dataToSave = {
+        query: temp_items['searchQuery'],
+        time: formattedDate,
+        item_name: itemName,
+        amazon_com_price: parseFloat(prices['Amazon.com']),
+        amazon_co_uk_price: parseFloat(prices['Amazon.co.uk']),
+        amazon_de_price: parseFloat(prices['Amazon.de']),
+        amazon_ca_price: parseFloat(prices['Amazon.ca'])
+    };
+
+    saveItemData(dataToSave).then(response => {
+        alert("item added to database");
+    });
 }
 
 // Add an event listener to handle clicking on a search result
-document.getElementById('results-table').addEventListener('click', async(event) => {
+document.getElementById('results-table').addEventListener('click', (event) => {
     let target = event.target;
     while (target.tagName !== 'TR') {
         target = target.parentElement;
@@ -106,21 +129,7 @@ document.getElementById('results-table').addEventListener('click', async(event) 
     const itemName = temp_items['results'][target.rowIndex - 1]['name'];
     const amazon_com_price = temp_items['results'][target.rowIndex - 1]['price'];
     const itemRating = temp_items['results'][target.rowIndex - 1]['rating'];
-    await fetchProductDetails(asin, itemName, amazon_com_price, itemRating);
-
-    const dataToSave = {
-        query: temp_items['searchQuery'],
-        time: new Date().toISOString().slice(0, 19).replace('T', ' '),
-        item_name: itemName,
-        amazon_com_price: parseFloat(amazon_com_price.replace('$', '')),
-        amazon_co_uk_price: parseFloat(temp_items['prices']['Amazon.co.uk'].replace('$', '')),
-        amazon_de_price: parseFloat(temp_items['prices']['Amazon.de'].replace('$', '')),
-        amazon_ca_price: parseFloat(temp_items['prices']['Amazon.ca'].replace('$', ''))
-    };
-
-    saveItemData(dataToSave).then(response => {
-        console.log(response);
-    });
+    fetchProductDetails(asin, itemName, amazon_com_price, itemRating);
 });
 
 
@@ -134,4 +143,5 @@ async function saveItemData(data) {
     });
     return response.json();
 }
+
 

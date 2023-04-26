@@ -5,14 +5,18 @@ from bs4 import BeautifulSoup
 import re
 import time
 from models import db, SearchData
+import os
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///search_data.db'
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///search_data.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance', 'search_data.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
 with app.app_context():
+    db.drop_all()  # Drop all existing tables
     db.create_all()
+
 
 def fetch_amazon_search_page(query='case', country='ca', is_asin=False):
     headers = get_headers()
@@ -31,11 +35,16 @@ def fetch_amazon_search_page(query='case', country='ca', is_asin=False):
 
 
 USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_6_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Safari/605.1.15",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0",
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1",
-    "Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Mobile Safari/537.36"
+    # "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36",
+    # "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_6_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Safari/605.1.15",
+    # "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0",
+    # "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1",
+    # "Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Mobile Safari/537.36"
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
+    'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:54.0) Gecko/20100101 Firefox/54.0',
+    'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:54.0) Gecko/20100101 Firefox/54.0',
+    'Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; AS; rv:11.0) like Gecko'
 ]
 
 
@@ -200,7 +209,7 @@ def product_details():
 
 
 @app.route('/save-item-data', methods=['POST'])
-def save_search_data():
+def save_item_data():
     data = request.get_json()
     search_data = SearchData(
         query=data['query'],
@@ -212,7 +221,14 @@ def save_search_data():
         amazon_ca_price=data['amazon_ca_price']
     )
     db.session.add(search_data)
-    db.session.commit()
+    # db.session.commit()
+    try:
+        db.session.commit()
+    except Exception as e:
+        print(f"Error while committing the transaction: {e}")
+        db.session.rollback()
+        return jsonify({'message': 'Error while saving search data.'}), 500
+
     print("saving:", search_data)
     return jsonify({'message': 'Search data saved successfully.'})
 
@@ -221,6 +237,11 @@ def save_search_data():
 @app.route('/')
 def index():
     return render_template("index.html")
+
+
+@app.route('/past_searches.html')
+def past_searches():
+    return render_template('past_searches.html')
 
 
 # type this in browser to open: http://localhost:81/
