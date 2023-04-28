@@ -26,6 +26,8 @@ with app.app_context():
 
 
 def fetch_amazon_search_page(query='case', country='ca', is_asin=False):
+    if query is None:
+        return None
     headers = get_headers()
     if not is_asin:
         url = f'https://www.amazon.{country}/s?k={query}'
@@ -33,7 +35,8 @@ def fetch_amazon_search_page(query='case', country='ca', is_asin=False):
         url = f'https://www.amazon.{country}/dp/{query}'
     time.sleep(3) # add a 3 second delay
     response = requests.get(url, headers=headers)
-    print(response.text)
+    # print(response.text)
+    print("searching...")
     return response.text
 
     # # for testing:
@@ -63,11 +66,14 @@ def get_headers():
 
 
 def extract_price(page_content, country):
+    if page_content is None:
+        return None
     soup = BeautifulSoup(page_content, 'html.parser')
     price_element = soup.find('span', {'class': 'a-offscreen'})
     if price_element:
         price = price_element.text.strip()
         price = float(re.sub(r'[^\d.]', '', price))
+        print("extracting:", price)
         if country in ['co.uk', 'de']:
             price = convert_to_usd(price, country)
         return price
@@ -201,8 +207,10 @@ def check_daily_searches():
 def product_details():
     data = request.json
     asin = data.get('asin')
+    item_name = data.get('item_name')  # Get the item name from the request
     amazon_com_price = data.get('amazon_com_price')
 
+    # Fetch product pages using the ASIN
     product_pages = {
         'co.uk': fetch_amazon_search_page(asin, 'co.uk', True),
         'de': fetch_amazon_search_page(asin, 'de', True),
@@ -219,13 +227,22 @@ def product_details():
     #     'ca': text,
     # }
 
+    # Extract prices using the ASIN
     prices = {
         'Amazon.com': amazon_com_price,
         'Amazon.co.uk': extract_price(product_pages['co.uk'], 'co.uk'),
         'Amazon.de': extract_price(product_pages['de'], 'de'),
         'Amazon.ca': extract_price(product_pages['ca'], 'ca'),
     }
+    print("before:", prices)
 
+    # If a price is not found using the ASIN, fetch product pages using the item name and extract the price
+    for country_code in ['co.uk', 'de', 'ca']:
+        if not prices[f'Amazon.{country_code}']:
+            product_pages[country_code] = fetch_amazon_search_page(item_name, country_code, False)
+            prices[f'Amazon.{country_code}'] = extract_price(product_pages[country_code], country_code)
+
+    print("after:", prices)
     return jsonify(prices)
 
 
