@@ -78,7 +78,9 @@ async function fetchProductDetails(asin, itemName, amazon_com_price, itemRating)
         },
         body: JSON.stringify({ asin, amazon_com_price }),
     });
-    const prices = await response.json();
+    const data = await response.json();
+    const prices = data.prices;
+    const urls = data.urls;
 
     // Create a new table with 6 columns and 2 rows to display the item's name, rating, and prices
     let table = document.createElement('table');
@@ -98,10 +100,10 @@ async function fetchProductDetails(asin, itemName, amazon_com_price, itemRating)
             <tr>
                 <td>${itemName}</td>
                 <td>${itemRating}</td>
-                <td>${prices['Amazon.com'] || 'Not found'}</td>
-                <td>${prices['Amazon.co.uk'] || 'Not found'}</td>
-                <td>${prices['Amazon.de'] || 'Not found'}</td>
-                <td>${prices['Amazon.ca'] || 'Not found'}</td>
+                <td><a href="${urls['Amazon.com'] || '#'}" target="_blank">${prices['Amazon.com'] || 'Not found'}</a></td>
+                <td><a href="${urls['Amazon.co.uk'] || '#'}" target="_blank">${prices['Amazon.co.uk'] || 'Not found'}</a></td>
+                <td><a href="${urls['Amazon.de'] || '#'}" target="_blank">${prices['Amazon.de'] || 'Not found'}</a></td>
+                <td><a href="${urls['Amazon.ca'] || '#'}" target="_blank">${prices['Amazon.ca'] || 'Not found'}</a></td>
             </tr>
         </tbody>
     `;

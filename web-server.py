@@ -217,16 +217,6 @@ def product_details():
         'ca': fetch_amazon_search_page(asin, 'ca', True),
     }
 
-    # # for testing:
-    # with open("html_de_laptop.txt", 'r') as f:
-    #     text = f.read()
-    #
-    # product_pages = {
-    #     'co.uk': text,
-    #     'de': text,
-    #     'ca': text,
-    # }
-
     # Extract prices using the ASIN
     prices = {
         'Amazon.com': amazon_com_price,
@@ -243,7 +233,16 @@ def product_details():
             prices[f'Amazon.{country_code}'] = extract_price(product_pages[country_code], country_code)
 
     print("after:", prices)
-    return jsonify(prices)
+
+    # Extract product URLs
+    product_urls = {
+        'Amazon.com': f'https://www.amazon.com/dp/{asin}',
+        'Amazon.co.uk': f'https://www.amazon.co.uk/dp/{asin}',
+        'Amazon.de': f'https://www.amazon.de/dp/{asin}',
+        'Amazon.ca': f'https://www.amazon.ca/dp/{asin}',
+    }
+
+    return jsonify({'prices': prices, 'urls': product_urls})
 
 
 @app.route('/save-item-data', methods=['POST'])
