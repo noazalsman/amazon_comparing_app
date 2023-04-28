@@ -70,13 +70,13 @@ function populateResultsTable(results) {
 }
 
 
-async function fetchProductDetails(asin, itemName, amazon_com_price, itemRating) {
+async function fetchProductDetails(asin, item_name, amazon_com_price, itemRating) {
     const response = await fetch('/product-details', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ asin, amazon_com_price }),
+        body: JSON.stringify({ asin, amazon_com_price, item_name }),
     });
     const data = await response.json();
     const prices = data.prices;
@@ -98,12 +98,12 @@ async function fetchProductDetails(asin, itemName, amazon_com_price, itemRating)
         </thead>
         <tbody>
             <tr>
-                <td>${itemName}</td>
+                <td>${item_name}</td>
                 <td>${itemRating}</td>
-                <td><a href="${urls['Amazon.com'] || '#'}" target="_blank">${prices['Amazon.com'] || 'Not found'}</a></td>
-                <td><a href="${urls['Amazon.co.uk'] || '#'}" target="_blank">${prices['Amazon.co.uk'] || 'Not found'}</a></td>
-                <td><a href="${urls['Amazon.de'] || '#'}" target="_blank">${prices['Amazon.de'] || 'Not found'}</a></td>
-                <td><a href="${urls['Amazon.ca'] || '#'}" target="_blank">${prices['Amazon.ca'] || 'Not found'}</a></td>
+                <td><a href="${urls['Amazon.com'] || '#'}" target="_blank">${prices['Amazon.com'] ? '$' + prices['Amazon.com'] : 'Not found'}</a></td>
+                <td><a href="${urls['Amazon.co.uk'] || '#'}" target="_blank">${prices['Amazon.co.uk'] ? '$' + prices['Amazon.co.uk'] : 'Not found'}</a></td>
+                <td><a href="${urls['Amazon.de'] || '#'}" target="_blank">${prices['Amazon.de'] ? '$' + prices['Amazon.de'] : 'Not found'}</a></td>
+                <td><a href="${urls['Amazon.ca'] || '#'}" target="_blank">${prices['Amazon.ca'] ? '$' + prices['Amazon.ca'] : 'Not found'}</a></td>
             </tr>
         </tbody>
     `;
@@ -121,7 +121,7 @@ async function fetchProductDetails(asin, itemName, amazon_com_price, itemRating)
     const dataToSave = {
         query: temp_items['searchQuery'],
         time: formattedDate,
-        item_name: itemName,
+        item_name: item_name,
         amazon_com_price: parseFloat(prices['Amazon.com']),
         amazon_co_uk_price: parseFloat(prices['Amazon.co.uk']),
         amazon_de_price: parseFloat(prices['Amazon.de']),
@@ -140,10 +140,10 @@ document.getElementById('results-table').addEventListener('click', (event) => {
         target = target.parentElement;
     }
     const asin = temp_items['results'][target.rowIndex - 1]['asin'];
-    const itemName = temp_items['results'][target.rowIndex - 1]['name'];
+    const item_name = temp_items['results'][target.rowIndex - 1]['name'];
     const amazon_com_price = temp_items['results'][target.rowIndex - 1]['price'];
     const itemRating = temp_items['results'][target.rowIndex - 1]['rating'];
-    fetchProductDetails(asin, itemName, amazon_com_price, itemRating);
+    fetchProductDetails(asin, item_name, amazon_com_price, itemRating);
 });
 
 

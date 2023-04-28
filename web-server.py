@@ -226,14 +226,6 @@ def product_details():
     }
     print("before:", prices)
 
-    # If a price is not found using the ASIN, fetch product pages using the item name and extract the price
-    for country_code in ['co.uk', 'de', 'ca']:
-        if not prices[f'Amazon.{country_code}']:
-            product_pages[country_code] = fetch_amazon_search_page(item_name, country_code, False)
-            prices[f'Amazon.{country_code}'] = extract_price(product_pages[country_code], country_code)
-
-    print("after:", prices)
-
     # Extract product URLs
     product_urls = {
         'Amazon.com': f'https://www.amazon.com/dp/{asin}',
@@ -241,6 +233,15 @@ def product_details():
         'Amazon.de': f'https://www.amazon.de/dp/{asin}',
         'Amazon.ca': f'https://www.amazon.ca/dp/{asin}',
     }
+
+    # If a price is not found using the ASIN, fetch product pages using the item name and extract the price
+    for country_code in ['co.uk', 'de', 'ca']:
+        if not prices[f'Amazon.{country_code}']:
+            product_pages[country_code] = fetch_amazon_search_page(item_name, country_code, False)
+            product_urls[f'Amazon.{country_code}'] = f'https://www.amazon.{country_code}/s?k={item_name}'
+            prices[f'Amazon.{country_code}'] = extract_price(product_pages[country_code], country_code)
+
+    print("after:", prices)
 
     return jsonify({'prices': prices, 'urls': product_urls})
 
