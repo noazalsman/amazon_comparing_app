@@ -25,7 +25,7 @@ with app.app_context():
         db.session.commit()
 
 
-def fetch_amazon_search_page(query='case', country='ca', is_asin=False):
+def fetch_amazon_search_page(query='None', country='com', is_asin=False):
     if query is None:
         return None
     headers = get_headers()
