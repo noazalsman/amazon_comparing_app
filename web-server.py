@@ -9,7 +9,6 @@ import os
 from datetime import datetime
 
 app = Flask(__name__)
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///search_data.db'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance', 'search_data.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
@@ -35,13 +34,8 @@ def fetch_amazon_search_page(query='None', country='com', is_asin=False):
         url = f'https://www.amazon.{country}/dp/{query}'
     time.sleep(3) # add a 3 second delay
     response = requests.get(url, headers=headers)
-    # print(response.text)
     print("searching...")
     return response.text
-
-    # # for testing:
-    # with open("html_com_case.txt", 'w') as f:
-    #     f.write(response.text)
 
 
 USER_AGENTS = [
@@ -84,7 +78,7 @@ def convert_to_usd(price, country):
     # Implement a conversion function or use an API to get the conversion rate
     # Here's a simple example using fixed conversion rates
     conversion_rates = {
-        'co.uk': 1.31,  # GBP to USD
+        'co.uk': 1.26,  # GBP to USD
         'de': 1.11,  # EUR to USD
     }
     return price * conversion_rates.get(country, 1)
@@ -95,9 +89,6 @@ def search():
     query = request.args.get('query')
     text = fetch_amazon_search_page(query)
 
-    # for testing:
-    # with open("html_com_laptop.txt", 'r') as f:
-    #     text = f.read()
 
     # Parse the response using BeautifulSoup
     soup = BeautifulSoup(text, 'html.parser')
@@ -105,40 +96,6 @@ def search():
     # Extract the top 10 search results
     search_results = []
     results = soup.find_all('div', {'data-component-type': 's-search-result'})
-    # results = soup.find_all('div', {'data-index': lambda x: x and x.isdigit() and int(x) >= 1}, limit=10)
-    # results = soup.select(".s-result-item")
-    # items = soup.select(".s-result-item")
-
-    # for item in items:
-    #     name = soup.select_one("#productTitle")
-    #     image = soup.select_one("#landingImage")
-    #     price = soup.select_one("#priceblock_ourprice, #priceblock_dealprice, .a-price .a-offscreen, .a-color-price")
-    #     rating = soup.select_one("#acrPopover")
-    #
-    #     if name:
-    #         name = name.text.strip()
-    #     if image:
-    #         image = image["src"]
-    #     if price:
-    #         price = price.text.strip()
-    #     if rating:
-    #         rating_text = rating["title"]
-    #         rating_value = re.search(r"(\d+(\.\d+)?)", rating_text)
-    #         if rating_value:
-    #             rating = float(rating_value.group(1))
-    #         else:
-    #             rating = None
-    #
-    #     result = {
-    #         "name": name,
-    #         "image": image,
-    #         "price": price,
-    #         "rating": rating,
-    #         # "asin": asin
-    #     }
-    #     search_results.append(result)
-    #     if len(search_results) >= 10:
-    #         break
 
     for result in results:
         if len(search_results) < 10:
