@@ -20,19 +20,19 @@ async function fetchPastSearches() {
             row.appendChild(itemNameCell);
 
             const amazonComPriceCell = document.createElement('td');
-            amazonComPriceCell.textContent = result.amazon_com_price !== null ? result.amazon_com_price : 'Not found';
+            amazonComPriceCell.textContent = result.amazon_com_price !== null ? `$${result.amazon_com_price}` : 'Not found';
             row.appendChild(amazonComPriceCell);
 
             const amazonCoUkPriceCell = document.createElement('td');
-            amazonCoUkPriceCell.textContent = result.amazon_co_uk_price !== null ? result.amazon_co_uk_price : 'Not found';
+            amazonCoUkPriceCell.textContent = result.amazon_co_uk_price !== null ? `$${result.amazon_co_uk_price}` : 'Not found';
             row.appendChild(amazonCoUkPriceCell);
 
             const amazonDePriceCell = document.createElement('td');
-            amazonDePriceCell.textContent = result.amazon_de_price !== null ? result.amazon_de_price : 'Not found';
+            amazonDePriceCell.textContent = result.amazon_de_price !== null ? `$${result.amazon_de_price}` : 'Not found';
             row.appendChild(amazonDePriceCell);
 
             const amazonCaPriceCell = document.createElement('td');
-            amazonCaPriceCell.textContent = result.amazon_ca_price !== null ? result.amazon_ca_price : 'Not found';
+            amazonCaPriceCell.textContent = result.amazon_ca_price !== null ? `$${result.amazon_ca_price}` : 'Not found';
             row.appendChild(amazonCaPriceCell);
 
             tableBody.appendChild(row);

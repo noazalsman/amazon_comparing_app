@@ -7,6 +7,8 @@ import time
 from models import db, SearchData, User
 import os
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance', 'search_data.db')
@@ -22,6 +24,10 @@ with app.app_context():
         shared_user = User(daily_search_count=0)
         db.session.add(shared_user)
         db.session.commit()
+
+
+def fetch_product_page_with_args(args):
+    return fetch_amazon_search_page(*args)
 
 
 def fetch_amazon_search_page(query='None', country='com', is_asin=False):
@@ -75,8 +81,6 @@ def extract_price(page_content, country):
 
 
 def convert_to_usd(price, country):
-    # Implement a conversion function or use an API to get the conversion rate
-    # Here's a simple example using fixed conversion rates
     conversion_rates = {
         'co.uk': 1.26,  # GBP to USD
         'de': 1.11,  # EUR to USD
@@ -89,7 +93,6 @@ def search():
     query = request.args.get('query')
     text = fetch_amazon_search_page(query)
 
-
     # Parse the response using BeautifulSoup
     soup = BeautifulSoup(text, 'html.parser')
 
@@ -101,7 +104,6 @@ def search():
         if len(search_results) < 10:
             try:
                 # Get the product name
-                # name = result.find('span', class_='a-size-medium a-color-base a-text-normal')
                 name = result.find('span', class_='a-size-base-plus a-color-base a-text-normal')
 
                 # Get the product image URL
@@ -167,12 +169,20 @@ def product_details():
     item_name = data.get('item_name')  # Get the item name from the request
     amazon_com_price = data.get('amazon_com_price')
 
-    # Fetch product pages using the ASIN
-    product_pages = {
-        'co.uk': fetch_amazon_search_page(asin, 'co.uk', True),
-        'de': fetch_amazon_search_page(asin, 'de', True),
-        'ca': fetch_amazon_search_page(asin, 'ca', True),
-    }
+    with ThreadPoolExecutor() as executor:
+        args = [
+            (asin, 'co.uk', True),
+            (asin, 'de', True),
+            (asin, 'ca', True),
+        ]
+        futures_to_country_codes = {
+            executor.submit(fetch_product_page_with_args, arg): country_code for arg, country_code in zip(args, ['co.uk', 'de', 'ca'])
+        }
+
+        product_pages = {}
+        for future in as_completed(futures_to_country_codes):
+            country_code = futures_to_country_codes[future]
+            product_pages[country_code] = future.result()
 
     # Extract prices using the ASIN
     prices = {
@@ -192,9 +202,18 @@ def product_details():
     }
 
     # If a price is not found using the ASIN, fetch product pages using the item name and extract the price
-    for country_code in ['co.uk', 'de', 'ca']:
-        if not prices[f'Amazon.{country_code}']:
-            product_pages[country_code] = fetch_amazon_search_page(item_name, country_code, False)
+    with ThreadPoolExecutor() as executor:
+        args = [
+            (item_name, country_code, False) for country_code in ['co.uk', 'de', 'ca']
+            if not prices[f'Amazon.{country_code}']
+        ]
+        futures_to_country_codes = {
+            executor.submit(fetch_product_page_with_args, arg): country_code for arg, country_code in zip(args, ['co.uk', 'de', 'ca'])
+        }
+
+        for future in as_completed(futures_to_country_codes):
+            country_code = futures_to_country_codes[future]
+            product_pages[country_code] = future.result()
             product_urls[f'Amazon.{country_code}'] = f'https://www.amazon.{country_code}/s?k={item_name}'
             prices[f'Amazon.{country_code}'] = extract_price(product_pages[country_code], country_code)
 
@@ -216,7 +235,6 @@ def save_item_data():
         amazon_ca_price=data['amazon_ca_price']
     )
     db.session.add(search_data)
-    # db.session.commit()
     try:
         db.session.commit()
     except Exception as e:
@@ -260,6 +278,5 @@ def past_searches():
     return render_template('past_searches.html')
 
 
-# Type this in browser to open: http://localhost:81/
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=81, debug=True)
